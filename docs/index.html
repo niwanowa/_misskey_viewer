@@ -1,15 +1,52 @@
 <!DOCTYPE html>
-<html lang="ja">
-    <head>
-        <meta charset="UTF-8">
-        <title>misskey_Viewer(仮)</title>
-    </head>
+<html>
 
-    <body>
+<head>
+    <title>Misskey_Viewer(仮)</title>
+</head>
 
-        <script>
-            document.write('<p>Hello</p>');
-        </script>
+<body>
+    <form id="message-form">
+        <label for="message">Enter misskey instance url:</label>
+        <input type="text" id="message" value="misskey.io" />
+        <button type="submit">Send</button>
+    </form>
 
-    </body>
+    <p>Messages:</p>
+    <ul id="messages"></ul>
+
+    <script>
+        // WebSocketを作成する
+        let socket = null;
+
+        const request = '{"type": "connect","body": {"channel": "localTimeline","id": "2"}}';
+
+        // メッセージを送信するフォームの処理
+        const form = document.getElementById("message-form");
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const input = document.getElementById("message");
+            const message = input.value;
+            socket = new WebSocket("wss://" + message)
+
+            // 接続が確立された時の処理
+            socket.onopen = function (event) {
+                console.log("WebSocket connected");
+                socket.send(request);
+            };
+
+            // メッセージを受信した時の処理
+            socket.onmessage = function (event) {
+                const messages = document.getElementById("messages");
+                const li = document.createElement("li");
+                const data = JSON.parse(event.data);
+                if (data.body.type === "note") {
+                    li.innerText = data.body.body.text;
+                    messages.appendChild(li);
+                }
+            };
+        });
+    </script>
+</body>
+
 </html>
