@@ -2,7 +2,27 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
     <title>Misskey_Viewer(仮)</title>
+    <style>
+        /* カラムを横に並べるためのスタイル */
+        #table {
+            display: flex;
+            height: 100vh;
+            /* ウィンドウの高さいっぱいに広がるように */
+        }
+
+        #table>div {
+            flex: 1;
+            /* 等幅にする */
+            padding: 8px;
+            /* 余白をつける */
+            box-sizing: border-box;
+            /* paddingを含めたボックスサイズにする */
+            overflow-y: scroll;
+            /* 内容がはみ出した場合はスクロールバーを表示する */
+        }
+    </style>
 </head>
 
 <body>
@@ -12,22 +32,32 @@
         <button type="submit">Send</button>
     </form>
 
-    <p>Messages:</p>
-    <ul id="messages"></ul>
+    <div id="table"></div>
 
     <script>
         // WebSocketを作成する
-        let socket = null;
+        const sockets = [];
 
         const request = '{"type": "connect","body": {"channel": "localTimeline","id": "2"}}';
 
-        // メッセージを送信するフォームの処理
+        // misskeyインスタンス取得処理
         const form = document.getElementById("message-form");
         form.addEventListener("submit", function (event) {
             event.preventDefault();
             const input = document.getElementById("message");
             const message = input.value;
-            socket = new WebSocket("wss://" + message)
+            const socket = createWebSocket("wss://" + message);
+            sockets.push(socket);
+            // 新しいカラムを追加
+            const table = document.getElementById('table');
+            const div = document.createElement('div');
+            div.setAttribute('id', 'column' + (sockets.length - 1));
+            table.appendChild(div);
+        });
+
+        // WebSocketを作成する関数
+        function createWebSocket(url) {
+            const socket = new WebSocket(url);
 
             // 接続が確立された時の処理
             socket.onopen = function (event) {
@@ -37,15 +67,22 @@
 
             // メッセージを受信した時の処理
             socket.onmessage = function (event) {
-                const messages = document.getElementById("messages");
-                const li = document.createElement("li");
                 const data = JSON.parse(event.data);
+                console.log(data)
                 if (data.body.type === "note") {
-                    li.innerText = data.body.body.text;
-                    messages.appendChild(li);
+                    const message = data.body.body.text;
+                    console.log(message)
+                    // WebSocketごとに異なるidを持つdiv要素を作成
+                    const id = sockets.indexOf(socket);
+                    console.log(id)
+                    const div = document.getElementById('column' + id);
+                    console.log(div)
+                    // 受信したデータをdiv要素に表示
+                    div.innerHTML += message + '<br>';
                 }
             };
-        });
+            return socket;
+        }
     </script>
 </body>
 
