@@ -8,19 +8,25 @@
         /* カラムを横に並べるためのスタイル */
         #table {
             display: flex;
-            height: 100vh;
             /* ウィンドウの高さいっぱいに広がるように */
+            height: 100vh;
         }
 
         #table>div {
-            flex: 1;
+            display:flex;
+            flex-flow: column;
             /* 等幅にする */
-            padding: 8px;
+            flex: 1;
             /* 余白をつける */
-            box-sizing: border-box;
+            padding: 8px;
             /* paddingを含めたボックスサイズにする */
-            overflow-y: scroll;
+            box-sizing: border-box;
             /* 内容がはみ出した場合はスクロールバーを表示する */
+            overflow-y: scroll;
+        }
+
+        .note {
+            border: 2px solid #000000;
         }
     </style>
 </head>
@@ -51,7 +57,9 @@
             // 新しいカラムを追加
             const table = document.getElementById('table');
             const div = document.createElement('div');
-            div.setAttribute('id', 'column' + (sockets.length - 1));
+            const id = 'column' + (sockets.length - 1);
+            div.setAttribute('id', id);
+            div.className = 'row';
             table.appendChild(div);
         });
 
@@ -68,17 +76,23 @@
             // メッセージを受信した時の処理
             socket.onmessage = function (event) {
                 const data = JSON.parse(event.data);
-                console.log(data)
-                if (data.body.type === "note") {
+
+                if (data.body.type === "note" && data.body.body.text != null) {
                     const message = data.body.body.text;
-                    console.log(message)
                     // WebSocketごとに異なるidを持つdiv要素を作成
                     const id = sockets.indexOf(socket);
-                    console.log(id)
                     const div = document.getElementById('column' + id);
-                    console.log(div)
-                    // 受信したデータをdiv要素に表示
-                    div.innerHTML += message + '<br>';
+
+                    // 新しい子要素を作成
+                    const newMessage = document.createElement('div');
+                    newMessage.className = 'note'
+                    newMessage.textContent = message;
+                    newMessage.style.order = div.childElementCount * -1;
+
+                    // 新しい子要素をdiv要素に追加
+                    div.appendChild(newMessage);
+                }else{
+                    console.log(data);
                 }
             };
             return socket;
