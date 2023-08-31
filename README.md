@@ -1,4 +1,4 @@
-# misskey_viewer(仮)
+# _misskey_viewer
 名前は変更予定
 
 # ゴール
